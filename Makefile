@@ -4,7 +4,7 @@ all: test
 
 test: test/test.c src/termcolor.c src/termcolor.h
 	$(CC) -o bin/test \
-		-std=c89 -pedantic -Wall \
+		-std=c99 -pedantic -Wall \
 		-Wno-missing-braces -Wextra -Wno-missing-field-initializers -Wformat=2 \
 		-Wswitch-default -Wswitch-enum -Wcast-align -Wpointer-arith \
 		-Wbad-function-cast -Wstrict-overflow=5 -Wstrict-prototypes -Winline \
