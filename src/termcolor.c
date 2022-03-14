@@ -163,7 +163,7 @@ void termcolor_push(const TermColor background_color, const TermColor text_color
   init_color_stack();
   const char *background = get_color(background_color, TermColorTypeBackground);
   const char *text = get_color(text_color, TermColorTypeText);
-  printf("%s%s", background, text);
+  printf("%s%s%s", ANSI_RESET, background, text);
   termcolor_stack_push(color_stack, background_color, text_color);
 }
 
@@ -172,12 +172,12 @@ void termcolor_push_background(const TermColor background_color) {
   const char *background = get_color(background_color, TermColorTypeBackground);
 
   if (termcolor_stack_is_empty(color_stack)) {
-    printf("%s", background);
+    printf("%s%s", ANSI_RESET, background);
     termcolor_stack_push(color_stack, background_color, TermColorNone);
   } else {
     TermColor *last_colors = termcolor_stack_peek(color_stack);
     const char *text = get_color(termcolor_stack_peek(color_stack)[1], TermColorTypeText);
-    printf("%s%s", background, text);
+    printf("%s%s%s", ANSI_RESET, background, text);
     termcolor_stack_push(color_stack, background_color, last_colors[1]);
   }
 }
@@ -187,12 +187,12 @@ void termcolor_push_text(const TermColor text_color) {
   const char *text = get_color(text_color, TermColorTypeText);
 
   if (termcolor_stack_is_empty(color_stack)) {
-    printf("%s", text);
+    printf("%s%s", ANSI_RESET, text);
     termcolor_stack_push(color_stack, TermColorNone, text_color);
   } else {
     TermColor *last_colors = termcolor_stack_peek(color_stack);
     const char *background = get_color(last_colors[0], TermColorTypeBackground);
-    printf("%s%s", background, text);
+    printf("%s%s%s", ANSI_RESET, background, text);
     termcolor_stack_push(color_stack, last_colors[0], text_color);
   }
 }
@@ -207,13 +207,13 @@ void termcolor_pop(void) {
     TermColor *last_colors = termcolor_stack_peek(color_stack);
     const char *background = get_color(last_colors[0], TermColorTypeBackground);
     const char *text = get_color(last_colors[1], TermColorTypeText);
-    printf("%s%s", background, text);
+    printf("%s%s%s", ANSI_RESET, background, text);
   }
 }
 
 void termcolor_clear(void) {
   init_color_stack();
-  printf(ANSI_RESET);
+  printf("%s", ANSI_RESET);
   termcolor_stack_destroy(color_stack);
   color_stack = NULL;
 }
