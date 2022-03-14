@@ -1,3 +1,11 @@
+/**
+ * @file termcolor.h
+ * @author Will Allen
+ * @brief A C library for manipulating terminal colors using ANSI escape codes.
+ * @version 1.0.0
+ * @date 2022-03-13
+ */
+
 #pragma once
 #ifndef TERMCOLOR_H
 #define TERMCOLOR_H
@@ -6,66 +14,57 @@
 extern "C" {
 #endif
 
-#define ANSI_TEXT_BLACK          "\x1b[30m"
-#define ANSI_TEXT_RED            "\x1b[31m"
-#define ANSI_TEXT_GREEN          "\x1b[32m"
-#define ANSI_TEXT_YELLOW         "\x1b[33m"
-#define ANSI_TEXT_BLUE           "\x1b[34m"
-#define ANSI_TEXT_MAGENTA        "\x1b[35m"
-#define ANSI_TEXT_CYAN           "\x1b[36m"
-#define ANSI_TEXT_WHITE          "\x1b[37m"
-#define ANSI_TEXT_BRIGHT_BLACK   "\x1b[90m"
-#define ANSI_TEXT_BRIGHT_RED     "\x1b[91m"
-#define ANSI_TEXT_BRIGHT_GREEN   "\x1b[92m"
-#define ANSI_TEXT_BRIGHT_YELLOW  "\x1b[93m"
-#define ANSI_TEXT_BRIGHT_BLUE    "\x1b[94m"
-#define ANSI_TEXT_BRIGHT_MAGENTA "\x1b[95m"
-#define ANSI_TEXT_BRIGHT_CYAN    "\x1b[96m"
-#define ANSI_TEXT_BRIGHT_WHITE   "\x1b[97m"
-#define ANSI_BG_BLACK            "\x1b[40m"
-#define ANSI_BG_RED              "\x1b[41m"
-#define ANSI_BG_GREEN            "\x1b[42m"
-#define ANSI_BG_YELLOW           "\x1b[43m"
-#define ANSI_BG_BLUE             "\x1b[44m"
-#define ANSI_BG_MAGENTA          "\x1b[45m"
-#define ANSI_BG_CYAN             "\x1b[46m"
-#define ANSI_BG_WHITE            "\x1b[47m"
-#define ANSI_BG_BRIGHT_BLACK     "\x1b[100m"
-#define ANSI_BG_BRIGHT_RED       "\x1b[101m"
-#define ANSI_BG_BRIGHT_GREEN     "\x1b[102m"
-#define ANSI_BG_BRIGHT_YELLOW    "\x1b[103m"
-#define ANSI_BG_BRIGHT_BLUE      "\x1b[104m"
-#define ANSI_BG_BRIGHT_MAGENTA   "\x1b[105m"
-#define ANSI_BG_BRIGHT_CYAN      "\x1b[106m"
-#define ANSI_BG_BRIGHT_WHITE     "\x1b[107m"
-#define ANSI_RESET               "\x1b[0m"
-
-extern const char *ansi_text_colors[];
-
-extern const char *ansi_background_colors[];
-
 typedef enum _TermColor {
-  Black,
-  Red,
-  Green,
-  Yellow,
-  Blue,
-  Magenta,
-  Cyan,
-  LightGray,
-  Gray,
-  LightRed,
-  LightGreen,
-  LightYellow,
-  LightBlue,
-  LightMagenta,
-  LightCyan,
-  White
+  TermColorBlack,
+  TermColorRed,
+  TermColorGreen,
+  TermColorYellow,
+  TermColorBlue,
+  TermColorMagenta,
+  TermColorCyan,
+  TermColorLightGray,
+  TermColorGray,
+  TermColorLightRed,
+  TermColorLightGreen,
+  TermColorLightYellow,
+  TermColorLightBlue,
+  TermColorLightMagenta,
+  TermColorLightCyan,
+  TermColorWhite,
+  TermColorDefault
 } TermColor;
 
-void coloredText(char *text, TermColor background_color, TermColor text_color);
+/**
+ * @brief Push new background and text colors to the terminal.
+ * 
+ * @param background_color The new background color.
+ * @param text_color The new text color.
+ */
+void termcolor_push(const TermColor background_color, const TermColor text_color);
 
-void resetTermColor(void);
+/**
+ * @brief Push a new background color to the terminal.
+ * 
+ * @param background_color The new background color.
+ */
+void termcolor_push_background(const TermColor background_color);
+
+/**
+ * @brief Push a new text color to the terminal.
+ * 
+ * @param text_color The new text color.
+ */
+void termcolor_push_text(const TermColor text_color);
+
+/**
+ * @brief Pop off the most recent background and text colors.
+ */
+void termcolor_pop(void);
+
+/**
+ * @brief Clear all color formatting from the terminal.
+ */
+void termcolor_clear(void);
 
 #ifdef __cplusplus
 }
