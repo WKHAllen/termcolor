@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include "termcolor.h"
 
 #define ANSI_TEXT_BLACK          "\x1b[30m"
@@ -51,7 +53,8 @@ static const char *ansi_text_colors[] = {
   ANSI_TEXT_BRIGHT_BLUE,
   ANSI_TEXT_BRIGHT_MAGENTA,
   ANSI_TEXT_BRIGHT_CYAN,
-  ANSI_TEXT_BRIGHT_WHITE
+  ANSI_TEXT_BRIGHT_WHITE,
+  ""
 };
 
 static const char *ansi_background_colors[] = {
@@ -70,53 +73,143 @@ static const char *ansi_background_colors[] = {
   ANSI_BG_BRIGHT_BLUE,
   ANSI_BG_BRIGHT_MAGENTA,
   ANSI_BG_BRIGHT_CYAN,
-  ANSI_BG_BRIGHT_WHITE
+  ANSI_BG_BRIGHT_WHITE,
+  ""
 };
 
 typedef enum _TermColorType {
-  Background,
-  Text
+  TermColorTypeBackground,
+  TermColorTypeText
 } TermColorType;
 
-static const char *get_color(const TermColor color, const TermColorType color_type) {
-  if (color == TermColorDefault) {
-    return ANSI_RESET;
+typedef struct _TermColorStackNode {
+  TermColor color_set[2];
+  struct _TermColorStackNode *next;
+} TermColorStackNode;
+
+typedef struct _TermColorStack {
+  TermColorStackNode *head;
+  unsigned int size;
+} TermColorStack;
+
+static TermColorStack *termcolor_stack(void) {
+  TermColorStack *stack = (TermColorStack *)malloc(sizeof(TermColorStack));
+  stack->head = NULL;
+  stack->size = 0;
+  return stack;
+}
+
+static bool termcolor_stack_is_empty(const TermColorStack *stack) {
+  return stack->size == 0;
+}
+
+static void termcolor_stack_push(TermColorStack *stack, const TermColor background_color, const TermColor text_color) {
+  TermColorStackNode *new_node = (TermColorStackNode *)malloc(sizeof(TermColorStackNode));
+  new_node->color_set[0] = background_color;
+  new_node->color_set[1] = text_color;
+  new_node->next = stack->head;
+  stack->head = new_node;
+  stack->size++;
+}
+
+static TermColor *termcolor_stack_pop(TermColorStack *stack) {
+  if (termcolor_stack_is_empty(stack)) {
+    return NULL;
   } else {
-    if (color_type == Background) {
-      return ansi_background_colors[color];
-    } else if (color_type == Text) {
-      return ansi_text_colors[color];
-    } else {
-      return ANSI_RESET;
-    }
+    TermColor *color_set = stack->head->color_set;
+    TermColorStackNode *new_head = stack->head->next;
+    free(stack->head);
+    stack->head = new_head;
+    stack->size--;
+    return color_set;
+  }
+}
+
+static TermColor *termcolor_stack_peek(TermColorStack *stack) {
+  if (termcolor_stack_is_empty(stack)) {
+    return NULL;
+  } else {
+    return stack->head->color_set;
+  }
+}
+
+static void termcolor_stack_destroy(TermColorStack *stack) {
+  while (!termcolor_stack_is_empty(stack)) {
+    termcolor_stack_pop(stack);
+  }
+
+  free(stack);
+}
+
+static TermColorStack *color_stack = NULL;
+
+static void init_color_stack(void) {
+  if (color_stack == NULL) {
+    color_stack = termcolor_stack();
+  }
+}
+
+static const char *get_color(const TermColor color, const TermColorType color_type) {
+  if (color_type == TermColorTypeBackground) {
+    return ansi_background_colors[color];
+  } else if (color_type == TermColorTypeText) {
+    return ansi_text_colors[color];
+  } else {
+    return ANSI_RESET;
   }
 }
 
 void termcolor_push(const TermColor background_color, const TermColor text_color) {
-  const char *background = get_color(background_color, Background);
-  const char *text = get_color(text_color, Text);
+  const char *background = get_color(background_color, TermColorTypeBackground);
+  const char *text = get_color(text_color, TermColorTypeText);
   printf("%s%s", background, text);
-  /* TODO: push to global stack */
+  init_color_stack();
+  termcolor_stack_push(color_stack, background_color, text_color);
 }
 
 void termcolor_push_background(const TermColor background_color) {
-  const char *background = get_color(background_color, Background);
+  const char *background = get_color(background_color, TermColorTypeBackground);
   printf("%s", background);
-  /* TODO: push to global stack */
+  init_color_stack();
+
+  if (termcolor_stack_is_empty(color_stack)) {
+    termcolor_stack_push(color_stack, background_color, TermColorNone);
+  } else {
+    TermColor *last_colors = termcolor_stack_peek(color_stack);
+    termcolor_stack_push(color_stack, background_color, last_colors[1]);
+  }
 }
 
 void termcolor_push_text(const TermColor text_color) {
-  const char *text = get_color(text_color, Text);
+  const char *text = get_color(text_color, TermColorTypeText);
   printf("%s", text);
-  /* TODO: push to global stack */
+  init_color_stack();
+
+  if (termcolor_stack_is_empty(color_stack)) {
+    termcolor_stack_push(color_stack, TermColorNone, text_color);
+  } else {
+    TermColor *last_colors = termcolor_stack_peek(color_stack);
+    termcolor_stack_push(color_stack, last_colors[0], text_color);
+  }
 }
 
 void termcolor_pop(void) {
-  /* TODO: pop from global stack */
-  /* if stack empty, do nothing */
+  init_color_stack();
+  termcolor_stack_pop(color_stack);
+
+  if (termcolor_stack_is_empty(color_stack)) {
+    termcolor_clear();
+  } else {
+    TermColor *last_colors = termcolor_stack_peek(color_stack);
+    const char *background = get_color(last_colors[0], TermColorTypeBackground);
+    const char *text = get_color(last_colors[1], TermColorTypeText);
+    printf("%s%s", background, text);
+  }
 }
 
 void termcolor_clear(void) {
   printf(ANSI_RESET);
-  /* TODO: empty global stack */
+  init_color_stack();
+  termcolor_stack_destroy(color_stack);
+  color_stack = NULL;
 }

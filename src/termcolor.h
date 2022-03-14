@@ -31,7 +31,7 @@ typedef enum _TermColor {
   TermColorLightMagenta,
   TermColorLightCyan,
   TermColorWhite,
-  TermColorDefault
+  TermColorNone
 } TermColor;
 
 /**
